@@ -111,10 +111,23 @@ module Koudoku
       end
     end
 
+    # Coupon needs the following methods to work:
+    #
+    # def free_trial? 
+    #   free_trial_length.to_i > 0 
+    # end
+
+    # def free_trial_ends 
+    #   free_trial? ? free_trial_length.to_i.days.from_now : 1000.days.ago
+    # end
+    #
     def create
-      @subscription = ::Subscription.new(subscription_params)
+      params = subscription_params 
+      coupon_code = subscription_params.delete(:__coupon_code)
+      coupon = Coupon.where(code: coupon_code).first if coupon_code.present?
+      @subscription = ::Subscription.new(params)
       @subscription.subscription_owner = @owner
-      @subscription.coupon_code = session[:koudoku_coupon_code]
+      @subscription.coupon = coupon
       
       if @subscription.save
         flash[:notice] = after_new_subscription_message
@@ -153,7 +166,7 @@ module Koudoku
       
       # If strong_parameters is around, use that.
       if defined?(ActionController::StrongParameters)
-        params.require(:subscription).permit(:plan_id, :stripe_id, :current_price, :credit_card_token, :card_type, :last_four)
+        params.require(:subscription).permit(:plan_id, :stripe_id, :current_price, :credit_card_token, :card_type, :last_four, :__coupon_code)
       else
         # Otherwise, let's hope they're using attr_accessible to protect their models!
         params[:subscription]
