@@ -74,12 +74,14 @@ module Koudoku::Subscription
               }
 
               # If the class we're being included in supports coupons ..
+              # Coupon relationship indicates a Koudoku managed coupon with a trial-period
               if respond_to? :coupon
                 if coupon.present? and coupon.free_trial?
                   trial_end = coupon.free_trial_ends.to_i
                 end
               end
 
+              # coupon_code indicates a Stripe managed coupon that must exist with the same code in Stripe
               customer_attributes[:coupon] = @coupon_code if @coupon_code
 
               # create a customer at that package level.
