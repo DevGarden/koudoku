@@ -123,16 +123,14 @@ module Koudoku
     #
     def create
       params = subscription_params 
-      coupon_code = subscription_params.delete(:__coupon_code)
-      coupon = Coupon.where(code: coupon_code).first if coupon_code.present?
       @subscription = ::Subscription.new(params)
       @subscription.subscription_owner = @owner
-      @subscription.coupon = coupon
       
       if @subscription.save
         flash[:notice] = after_new_subscription_message
         redirect_to after_new_subscription_path 
       else
+        @owner.reload  # if the Subscription.save failed, then @owner may have an invalid relationship to the unsaved Subscription
         flash[:error] = I18n.t('koudoku.failure.problem_processing_transaction')
         render :new
       end
